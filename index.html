@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>展覽誌｜北中南海外展覽時間軸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #FBF3EC;
+    --paper-raised: #FFFFFF;
+    --ink: #26221E;
+    --ink-soft: #8A8177;
+    --line: #E8E1D3;
+    --accent: #E36269;
+    --accent-soft: #FBDCDC;
+    --header-cell: #CFE1EC;
+    --north: #D98CB3;      --north-fill: #F3D6E5;
+    --central: #7CAE73;    --central-fill: #DBEAD6;
+    --south: #E0964E;      --south-fill: #F8E2C4;
+    --abroad: #4EA6B8;     --abroad-fill: #D2ECF0;
+    --radius-tag: 999px;
+    --serif: 'Noto Sans TC', sans-serif;
+    --sans: 'Noto Sans TC', sans-serif;
+    --row-h: 46px;
+    --bar-h: 30px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  a{color:inherit;}
+
+  /* ---------- header ---------- */
+  header.site{
+    padding:56px 24px 36px;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .eyebrow{
+    font-size:0.82rem;
+    font-weight:700;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+  }
+  header.site h1{
+    font-family:var(--sans);
+    font-weight:900;
+    font-size:clamp(2.1rem, 4.6vw, 3.1rem);
+    margin:0 0 16px;
+    letter-spacing:-0.01em;
+  }
+  header.site p.desc{
+    font-size:0.98rem;
+    color:var(--ink-soft);
+    max-width:56ch;
+    margin:0 0 26px;
+  }
+  .toolbar{ display:flex; gap:12px; flex-wrap:wrap; }
+  .toolbar button{
+    font-family:var(--sans);
+    font-size:0.88rem;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:var(--radius-tag);
+    border:1px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .toolbar button:hover{background:var(--ink);color:var(--paper);}
+  .toolbar button.primary{ background:var(--ink); border-color:var(--ink); color:#fff; }
+  .toolbar button.primary:hover{background:#050403;}
+  #import-input{display:none;}
+  .storage-note{
+    font-size:0.8rem;
+    color:var(--ink-soft);
+    margin:14px 0 0;
+  }
+
+  /* ---------- gantt timeline ---------- */
+  main.gantt-section{
+    max-width:1180px;
+    margin:0 auto;
+    padding:40px 24px 100px;
+  }
+  .gantt-legend{
+    display:flex; gap:18px; flex-wrap:wrap;
+    margin-bottom:18px; font-size:0.82rem; color:var(--ink-soft);
+  }
+  .gantt-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .gantt-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .gantt-container{
+    display:flex;
+    border:none;
+    border-radius:14px;
+    background:var(--paper-raised);
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(38,34,30,0.06);
+  }
+  .gantt-labels{
+    flex:0 0 60px;
+  }
+  .ruler-spacer{
+    height:44px;
+  }
+  .label-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-bottom:3px solid var(--paper-raised);
+  }
+  .label-block:last-child{ border-bottom:none; }
+  .label-block .label-text{
+    display:inline-block;
+    white-space:nowrap;
+    font-weight:800;
+    letter-spacing:0.02em;
+    color:#fff;
+    font-size:0.92rem;
+  }
+
+  .gantt-scroll{
+    flex:1;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .gantt-scroll-inner{ position:relative; }
+
+  .ruler{
+    height:44px;
+    position:relative;
+  }
+  .month-cell{
+    position:absolute;
+    top:8px; bottom:8px;
+    background:var(--header-cell);
+    border-radius:7px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    margin-right:4px;
+  }
+
+  .lane-block{
+    position:relative;
+  }
+  .baseline{
+    position:absolute;
+    left:8px; right:8px;
+    height:1px;
+    background:var(--line);
+  }
+  .bar{
+    position:absolute;
+    height:var(--bar-h);
+    border-radius:999px;
+    color:var(--ink);
+    font-size:0.78rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    cursor:pointer;
+    min-width:34px;
+    box-shadow:none;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .bar:hover, .bar:focus-visible{
+    transform:translateY(-1px);
+    box-shadow:0 3px 8px rgba(38,34,30,0.18);
+    outline:none;
+  }
+  .bar.past{ opacity:0.5; }
+  .bar.starred{
+    border:2px solid var(--accent);
+  }
+  .bar.starred.past{ opacity:0.6; }
+
+  .today-line{
+    position:absolute;
+    top:0; bottom:0;
+    width:1px;
+    background:var(--accent);
+    z-index:2;
+  }
+  .today-line span{
+    position:absolute;
+    top:6px; left:6px;
+    font-size:0.72rem;
+    font-weight:700;
+    color:var(--accent);
+    white-space:nowrap;
+  }
+
+  .hover-line{
+    position:absolute;
+    top:0; bottom:0;
+    width:2px;
+    background:#E4363D;
+    z-index:3;
+    pointer-events:none;
+    display:none;
+  }
+  .hover-line.visible{ display:block; }
+
+  .hover-readout{
+    margin-left:auto;
+    font-weight:800;
+    font-size:0.92rem;
+    color:#E4363D;
+    min-width:1px;
+  }
+
+  .empty-hint{
+    padding:24px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:0.9rem;
+  }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(34,31,28,0.6);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:48px 20px; overflow-y:auto; z-index:100;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    position:relative;
+    background:var(--paper-raised);
+    max-width:560px; width:100%;
+    border-radius:4px; overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,0.25);
+  }
+  .modal-close-x{
+    position:absolute;
+    top:10px; right:10px;
+    width:auto; height:auto;
+    border-radius:0;
+    border:none;
+    background:none;
+    font-size:1.15rem;
+    line-height:1;
+    cursor:pointer;
+    z-index:5;
+    padding:6px;
+    box-shadow:none;
+    opacity:0.85;
+  }
+  .modal-close-x:hover{opacity:1;}
+  .modal img{
+    width:100%; height:260px; object-fit:cover; display:block; background:var(--line);
+  }
+  .modal-media{ position:relative; height:260px; background:var(--line); }
+  .modal-media img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .modal-img-fallback{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    color:var(--ink-soft);
+    font-size:0.86rem;
+    background:repeating-linear-gradient(135deg, var(--line), var(--line) 10px, var(--paper-raised) 10px, var(--paper-raised) 20px);
+  }
+  .modal-media.broken img{ display:none; }
+  .modal-media.broken .modal-img-fallback{ display:flex; }
+  .modal-body{padding:52px 28px 32px; position:relative;}
+  .modal-body .region-tag{
+    display:inline-block; font-size:0.76rem; font-weight:700;
+    padding:4px 12px; border-radius:var(--radius-tag); margin-bottom:14px;
+  }
+  .modal-body h2{
+    font-family:var(--serif); font-size:1.55rem; font-weight:900;
+    margin:0 0 10px; line-height:1.35;
+  }
+  .modal-body .meta{ font-size:0.88rem; color:var(--ink-soft); margin-bottom:18px; }
+  .modal-body .meta div{margin-bottom:3px;}
+  .modal-body p.desc{ font-size:0.96rem; color:var(--ink); margin:0 0 24px; }
+  .modal-actions{ display:flex; gap:16px; align-items:center; }
+  .modal-actions a.visit{
+    color:var(--ink); text-decoration:none;
+    font-size:1.35rem;
+    line-height:1;
+    opacity:0.85;
+  }
+  .modal-actions a.visit:hover{opacity:1;}
+  .modal-delete{
+    background:none; border:none; padding:0;
+    font-size:1.35rem;
+    line-height:1;
+    cursor:pointer;
+    opacity:0.85;
+  }
+  .modal-delete:hover{opacity:1;}
+  .modal-edit{
+    position:absolute;
+    top:20px; right:20px;
+    background:none; border:none; padding:0;
+    font-size:1.35rem;
+    line-height:1;
+    cursor:pointer;
+    opacity:0.85;
+  }
+  .modal-edit:hover{opacity:1;}
+  .modal-star{
+    position:absolute;
+    top:20px; left:20px;
+    background:none; border:none; padding:0;
+    font-size:1.5rem;
+    line-height:1;
+    cursor:pointer;
+    color:#C98A00;
+    opacity:0.85;
+  }
+  .modal-star:hover{opacity:1;}
+
+  /* ---------- add form ---------- */
+  .form-overlay{
+    position:fixed; inset:0; background:rgba(34,31,28,0.6);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:48px 20px; overflow-y:auto; z-index:100;
+  }
+  .form-overlay.open{display:flex;}
+  .form-card{ background:var(--paper-raised); max-width:520px; width:100%; border-radius:4px; padding:28px; }
+  .form-card h2{ font-family:var(--serif); font-size:1.3rem; margin:0 0 18px; }
+  .form-card label{ display:block; font-size:0.82rem; font-weight:600; color:var(--ink-soft); margin:14px 0 6px; }
+  .form-card input, .form-card textarea, .form-card select{
+    width:100%; font-family:var(--sans); font-size:0.92rem;
+    padding:9px 11px; border:1px solid var(--line); border-radius:2px;
+    background:#fff; color:var(--ink);
+  }
+  .form-card textarea{resize:vertical; min-height:70px;}
+  .form-card .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .form-actions{ display:flex; gap:10px; margin-top:22px; justify-content:flex-end; }
+  .form-actions button{
+    font-family:var(--sans); font-weight:600; font-size:0.88rem;
+    padding:10px 18px; border-radius:var(--radius-tag); cursor:pointer;
+  }
+  .form-actions .cancel{background:none; border:1px solid var(--line); color:var(--ink-soft);}
+  .form-actions .save{background:var(--accent); border:1px solid var(--accent); color:#fff;}
+
+  @media (max-width: 680px){
+    .row2{grid-template-columns:1fr;}
+    .gantt-labels{ flex-basis:44px; }
+    .label-block .label-text{ font-size:0.76rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <p class="eyebrow">EXHIBITION TIMELINE</p>
+  <h1>展覽誌</h1>
+  <p class="desc">把北部、中部、南部與海外的展覽放進同一條時間軸。每個軸線是一條實際依日期排列的水平線，展覽依開始與結束日期落在對應的位置上，點色塊看完整資訊。</p>
+  <div class="toolbar">
+    <button class="primary" id="btn-add">＋ 新增展覽</button>
+    <button id="btn-export">匯出資料</button>
+    <button id="btn-import">匯入資料</button>
+    <input type="file" id="import-input" accept="application/json">
+  </div>
+  <p class="storage-note" id="storage-note"></p>
+</header>
+
+<main class="gantt-section">
+  <div class="gantt-legend" id="legend"></div>
+  <div class="gantt-container">
+    <div class="gantt-labels" id="gantt-labels"></div>
+    <div class="gantt-scroll" id="gantt-scroll">
+      <div class="gantt-scroll-inner" id="gantt-inner"></div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close-x" id="modal-close">❌</button>
+    <div class="modal-media">
+      <img id="modal-img" src="" alt="">
+      <div class="modal-img-fallback" id="modal-img-fallback">沒有可顯示的圖片</div>
+    </div>
+    <div class="modal-body">
+      <button class="modal-star" id="modal-star" title="標示為必看展覽">☆</button>
+      <button class="modal-edit" id="modal-edit" title="編輯展覽">✏️</button>
+      <span class="region-tag" id="modal-region-tag"></span>
+      <h2 id="modal-title"></h2>
+      <div class="meta">
+        <div id="modal-venue"></div>
+        <div id="modal-dates"></div>
+      </div>
+      <p class="desc" id="modal-desc"></p>
+      <div class="modal-actions">
+        <a class="visit" id="modal-link" href="#" target="_blank" rel="noopener" title="前往展覽頁面">🌐</a>
+        <button class="modal-delete" id="modal-delete" title="刪除這個展覽">🗑️</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-overlay" id="form-overlay">
+  <div class="form-card">
+    <h2 id="form-title">新增展覽</h2>
+    <label>展覽名稱</label>
+    <input type="text" id="f-title" placeholder="例如：光影劇場">
+    <div class="row2">
+      <div>
+        <label>軸線</label>
+        <select id="f-region">
+          <option value="north">北部</option>
+          <option value="central">中部</option>
+          <option value="south">南部</option>
+          <option value="abroad">海外</option>
+        </select>
+      </div>
+      <div>
+        <label>展館</label>
+        <input type="text" id="f-venue" placeholder="例如：台北市立美術館">
+      </div>
+    </div>
+    <div class="row2">
+      <div>
+        <label>開始日期</label>
+        <input type="date" id="f-start">
+      </div>
+      <div>
+        <label>結束日期</label>
+        <input type="date" id="f-end">
+      </div>
+    </div>
+    <label>圖片</label>
+    <input type="file" id="f-image-file" accept="image/*">
+    <label style="margin-top:8px;">或貼上圖片網址</label>
+    <input type="text" id="f-image" placeholder="https://...">
+    <label>展覽網址</label>
+    <input type="text" id="f-url" placeholder="https://...">
+    <label>展覽介紹</label>
+    <textarea id="f-desc" placeholder="簡短描述展覽內容"></textarea>
+    <div class="form-actions">
+      <button class="cancel" id="f-cancel">取消</button>
+      <button class="save" id="f-save">加入軸線</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* -----------------------------------------------------------
+   資料：以下為範例展覽，請直接編輯這個陣列，
+   或使用畫面上方「新增展覽」「匯出資料」「匯入資料」來管理。
+   region 只能是 north / central / south / abroad 其中之一。
+------------------------------------------------------------ */
+let EXHIBITIONS = [
+  { title:"城市邊界：當代攝影展", region:"north", venue:"台北市立美術館", start:"2026-08-01", end:"2026-10-18",
+    image:"https://picsum.photos/seed/exhibit-north-1/800/600",
+    url:"https://www.tfam.museum/", desc:"以攝影梳理台灣近十年城市擴張的樣貌，從邊陲聚落到重劃區，紀錄空間如何被重新定義。" },
+  { title:"紙上劇場：手工書與裝幀藝術", region:"north", venue:"松山文創園區", start:"2026-09-05", end:"2026-11-30",
+    image:"https://picsum.photos/seed/exhibit-north-2/800/600",
+    url:"https://www.songshanculturalpark.org/", desc:"邀集亞洲九位裝幀藝術家，展出手工書、活字印刷與立體書結構的實驗作品。" },
+  { title:"織路：中台灣纖維藝術聯展", region:"central", venue:"台中國家歌劇院 藝廊", start:"2026-07-12", end:"2026-10-05",
+    image:"https://picsum.photos/seed/exhibit-central-1/800/600",
+    url:"https://www.npac-ntt.org/", desc:"本展集結中部纖維藝術創作者作品，探討編織工藝與當代裝置藝術的交會。" },
+  { title:"彰化平原：地方誌插畫展", region:"central", venue:"彰化生活美學館", start:"2026-09-20", end:"2026-12-14",
+    image:"https://picsum.photos/seed/exhibit-central-2/800/600",
+    url:"https://www.chsec.gov.tw/", desc:"以插畫記錄彰化平原上的農村地景與生活記憶，結合地方文史工作者的口述採集。" },
+  { title:"港灣光年：南方當代藝術展", region:"south", venue:"高雄市立美術館", start:"2026-08-15", end:"2026-11-09",
+    image:"https://picsum.photos/seed/exhibit-south-1/800/600",
+    url:"https://www.kmfa.gov.tw/", desc:"聚焦高雄港灣的產業轉型與當代藝術實踐，展出裝置、錄像與聲音作品。" },
+  { title:"府城光影：老屋新生特展", region:"south", venue:"臺南文化中心", start:"2026-09-01", end:"2026-10-26",
+    image:"https://picsum.photos/seed/exhibit-south-2/800/600",
+    url:"https://www.tncsec.gov.tw/", desc:"紀錄台南老屋修復與再利用的十個案例，探討歷史街區保存與當代生活的共存方式。" },
+  { title:"東京森美術館：未來考古學", region:"abroad", venue:"森美術館，東京", start:"2026-07-25", end:"2026-10-12",
+    image:"https://picsum.photos/seed/exhibit-abroad-1/800/600",
+    url:"https://www.mori.art.museum/", desc:"從科幻與考古學的交會出發，探討人類文明在未來被回望時可能留下的痕跡。" },
+  { title:"龐畢度中心：物質的重量", region:"abroad", venue:"龐畢度中心，巴黎", start:"2026-09-10", end:"2027-01-18",
+    image:"https://picsum.photos/seed/exhibit-abroad-2/800/600",
+    url:"https://www.centrepompidou.fr/", desc:"回顧二十世紀後半以「物質」為核心的雕塑與裝置創作，橫跨貧窮藝術到當代極簡主義。" }
+];
+
+const REGION_LABEL = { north:"北", central:"中", south:"南", abroad:"海外" };
+const REGIONS = ["north","central","south","abroad"];
+const DAY_MS = 86400000;
+const PX_PER_DAY = 6;
+const ROW_GAP_DAYS = 4;
+
+function d(dateStr){ return new Date(dateStr + "T00:00:00"); }
+
+function assignRows(items){
+  const sorted = [...items].sort((a,b)=> d(a.start)-d(b.start));
+  const rowEnds = []; // last end date (ms) per row
+  sorted.forEach(item=>{
+    const s = d(item.start).getTime();
+    const e = d(item.end).getTime();
+    let placed=false;
+    for(let r=0; r<rowEnds.length; r++){
+      if(rowEnds[r] + ROW_GAP_DAYS*DAY_MS <= s){
+        item._row = r; rowEnds[r]=e; placed=true; break;
+      }
+    }
+    if(!placed){ item._row = rowEnds.length; rowEnds.push(e); }
+  });
+  return { items:sorted, rowCount: Math.max(rowEnds.length,1) };
+}
+
+function buildTimeline(){
+  const labelsEl = document.getElementById("gantt-labels");
+  const innerEl = document.getElementById("gantt-inner");
+  const legendEl = document.getElementById("legend");
+  labelsEl.innerHTML = ""; innerEl.innerHTML = ""; legendEl.innerHTML = "";
+  chartRangeStart = null; chartTotalWidth = 0; chartTotalHeight = 0; chartBarEdges = [];
+
+  REGIONS.forEach(r=>{
+    legendEl.innerHTML += `<span><i style="background:var(--${r})"></i>${REGION_LABEL[r]}</span>`;
+  });
+  legendEl.innerHTML += `<span>⭐ 必看展覽</span>`;
+  legendEl.innerHTML += `<span class="hover-readout" id="hover-readout"></span>`;
+
+  if(EXHIBITIONS.length === 0){
+    labelsEl.innerHTML = "";
+    innerEl.innerHTML = `<div class="empty-hint">目前沒有展覽資料，點上方「新增展覽」加入第一筆，或「匯入資料」讀取 json 檔。</div>`;
+    return;
+  }
+
+  const allStart = Math.min(...EXHIBITIONS.map(x=>d(x.start).getTime()));
+  const allEnd = Math.max(...EXHIBITIONS.map(x=>d(x.end).getTime()));
+  const rangeStart = new Date(allStart); rangeStart.setDate(1); // snap to month start
+  const rangeEndRaw = new Date(allEnd + 14*DAY_MS);
+  const totalDays = Math.ceil((rangeEndRaw - rangeStart)/DAY_MS);
+  const totalWidth = Math.max(totalDays * PX_PER_DAY, 600);
+
+  function xFor(dateObj){ return (dateObj.getTime() - rangeStart.getTime())/DAY_MS * PX_PER_DAY; }
+
+  chartRangeStart = rangeStart;
+  chartTotalWidth = totalWidth;
+  innerEl.style.width = totalWidth + "px";
+
+  // ruler
+  const ruler = document.createElement("div");
+  ruler.className = "ruler";
+  ruler.style.width = totalWidth + "px";
+  let cursor = new Date(rangeStart);
+  let lastYear = null;
+  while(cursor <= rangeEndRaw){
+    const nextMonth = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
+    const x1 = xFor(cursor);
+    const cellEnd = nextMonth < rangeEndRaw ? nextMonth : rangeEndRaw;
+    const x2 = xFor(cellEnd);
+    const cell = document.createElement("div");
+    cell.className = "month-cell";
+    cell.style.left = x1 + "px";
+    cell.style.width = Math.max(x2 - x1 - 4, 20) + "px";
+    const y = cursor.getFullYear(), m = cursor.getMonth()+1;
+    const label = (y !== lastYear) ? `${y}年${m}月` : `${m}月`;
+    lastYear = y;
+    cell.textContent = label;
+    ruler.appendChild(cell);
+    cursor = nextMonth;
+  }
+  innerEl.appendChild(ruler);
+
+  const rulerSpacer = document.createElement("div");
+  rulerSpacer.className = "ruler-spacer";
+  labelsEl.appendChild(rulerSpacer);
+
+  REGIONS.forEach(region=>{
+    const items = EXHIBITIONS.filter(x=>x.region===region);
+    const { items: placedItems, rowCount } = assignRows(items);
+    const laneHeight = rowCount * ROW_H_VAL();
+
+    const labelBlock = document.createElement("div");
+    labelBlock.className = "label-block";
+    labelBlock.style.height = laneHeight + "px";
+    labelBlock.style.background = `var(--${region})`;
+    labelBlock.innerHTML = `<span class="label-text">${REGION_LABEL[region]}</span>`;
+    labelsEl.appendChild(labelBlock);
+
+    const laneBlock = document.createElement("div");
+    laneBlock.className = "lane-block";
+    laneBlock.style.height = laneHeight + "px";
+    laneBlock.style.width = totalWidth + "px";
+
+    for(let row=0; row<rowCount; row++){
+      const base = document.createElement("div");
+      base.className = "baseline";
+      base.style.top = (row*ROW_H_VAL() + ROW_H_VAL()/2 - 0.5) + "px";
+      laneBlock.appendChild(base);
+    }
+
+    if(items.length===0){
+      // baseline only, no bars
+    } else {
+      placedItems.forEach(item=>{
+        const s = d(item.start), e = d(item.end);
+        const left = xFor(s);
+        const width = Math.max(xFor(e) - xFor(s), 34);
+        const bar = document.createElement("div");
+        const isPast = e.getTime() < Date.now();
+        bar.className = "bar" + (isPast ? " past" : "") + (item.starred ? " starred" : "");
+        bar.style.left = left + "px";
+        bar.style.width = width + "px";
+        bar.style.top = (item._row*ROW_H_VAL() + (ROW_H_VAL()-30)/2) + "px";
+        bar.style.background = `var(--${region}-fill)`;
+        bar.textContent = (item.starred ? "⭐ " : "") + item.title;
+        bar.title = `${item.title}（${item.start} → ${item.end}）`;
+        bar.tabIndex = 0;
+        bar.addEventListener("click", ()=>openModal(item));
+        bar.addEventListener("keydown", ev=>{ if(ev.key==="Enter") openModal(item); });
+        laneBlock.appendChild(bar);
+        chartBarEdges.push({ x:left, date:s, type:"start" });
+        chartBarEdges.push({ x:left+width, date:e, type:"end" });
+      });
+    }
+
+    innerEl.appendChild(laneBlock);
+  });
+
+  // shared height for today-line / hover-line
+  const totalHeight = 44 + REGIONS.reduce((sum,region)=>{
+    const items = EXHIBITIONS.filter(x=>x.region===region);
+    const { rowCount } = assignRows(items);
+    return sum + rowCount*ROW_H_VAL();
+  },0);
+  chartTotalHeight = totalHeight;
+  innerEl.style.position = "relative";
+
+  // hover crosshair line (position/visibility set on mousemove)
+  const hoverLine = document.createElement("div");
+  hoverLine.className = "hover-line";
+  hoverLine.id = "hover-line";
+  hoverLine.style.height = totalHeight + "px";
+  innerEl.appendChild(hoverLine);
+
+  // today marker
+  const today = new Date();
+  if(today >= rangeStart && today <= rangeEndRaw){
+    const tx = xFor(today);
+    const todayLine = document.createElement("div");
+    todayLine.className = "today-line";
+    todayLine.style.left = tx + "px";
+    todayLine.style.height = totalHeight + "px";
+    todayLine.innerHTML = `<span>今天</span>`;
+    innerEl.appendChild(todayLine);
+
+    // scroll into view
+    requestAnimationFrame(()=>{
+      document.getElementById("gantt-scroll").scrollLeft = Math.max(tx - 160, 0);
+    });
+  }
+}
+
+function ROW_H_VAL(){ return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row-h')); }
+
+/* ---------- hover date tracking ---------- */
+let chartRangeStart = null;
+let chartTotalWidth = 0;
+let chartTotalHeight = 0;
+let chartBarEdges = [];
+
+function formatShortDate(dateObj){
+  return `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+}
+
+function hideHoverLine(){
+  const line = document.getElementById("hover-line");
+  const readout = document.getElementById("hover-readout");
+  if(line) line.classList.remove("visible");
+  if(readout) readout.textContent = "";
+}
+
+function showHoverAt(clientX){
+  if(!chartRangeStart) return;
+  const innerEl = document.getElementById("gantt-inner");
+  const line = document.getElementById("hover-line");
+  const readout = document.getElementById("hover-readout");
+  if(!innerEl || !line || !readout) return;
+  const rect = innerEl.getBoundingClientRect();
+  const x = clientX - rect.left;
+  if(x < 0 || x > chartTotalWidth){ hideHoverLine(); return; }
+
+  const SNAP_PX = 8;
+  let snapped = null;
+  for(const edge of chartBarEdges){
+    if(Math.abs(edge.x - x) <= SNAP_PX){ snapped = edge; break; }
+  }
+
+  let lineX, dateObj;
+  if(snapped){
+    lineX = snapped.x;
+    dateObj = snapped.date;
+  } else {
+    lineX = x;
+    dateObj = new Date(chartRangeStart.getTime() + (x / PX_PER_DAY) * DAY_MS);
+  }
+
+  line.style.left = lineX + "px";
+  line.style.height = chartTotalHeight + "px";
+  line.classList.add("visible");
+  readout.textContent = formatShortDate(dateObj);
+}
+
+(function initHoverTracking(){
+  const scrollEl = document.getElementById("gantt-scroll");
+  scrollEl.addEventListener("mousemove", e => showHoverAt(e.clientX));
+  scrollEl.addEventListener("mouseleave", hideHoverLine);
+  scrollEl.addEventListener("touchmove", e => {
+    if(e.touches && e.touches[0]) showHoverAt(e.touches[0].clientX);
+  }, { passive:true });
+  scrollEl.addEventListener("touchend", hideHoverLine);
+})();
+
+/* ---------- modal ---------- */
+const modalOverlay = document.getElementById("modal-overlay");
+let currentModalItem = null;
+function openModal(item){
+  currentModalItem = item;
+  const img = document.getElementById("modal-img");
+  const media = document.querySelector(".modal-media");
+  media.classList.remove("broken");
+  if(item.image){
+    img.onerror = () => media.classList.add("broken");
+    img.src = item.image;
+    img.alt = item.title;
+  } else {
+    media.classList.add("broken");
+    img.removeAttribute("src");
+  }
+  const tag = document.getElementById("modal-region-tag");
+  tag.textContent = REGION_LABEL[item.region] === "海外" ? "海外" : REGION_LABEL[item.region] + "部";
+  tag.style.background = `var(--${item.region})`;
+  tag.style.color = "#fff";
+  document.getElementById("modal-star").textContent = item.starred ? "⭐" : "☆";
+  document.getElementById("modal-title").textContent = item.title;
+  document.getElementById("modal-venue").textContent = item.venue;
+  document.getElementById("modal-dates").textContent = `${item.start} → ${item.end}`;
+  document.getElementById("modal-desc").textContent = item.desc || "";
+  const link = document.getElementById("modal-link");
+  if(item.url){ link.href = item.url; link.style.display = "inline-block"; }
+  else { link.style.display = "none"; }
+  modalOverlay.classList.add("open");
+}
+document.getElementById("modal-close").addEventListener("click", ()=>modalOverlay.classList.remove("open"));
+modalOverlay.addEventListener("click", e=>{ if(e.target===modalOverlay) modalOverlay.classList.remove("open"); });
+
+document.getElementById("modal-star").addEventListener("click", async ()=>{
+  if(!currentModalItem) return;
+  currentModalItem.starred = !currentModalItem.starred;
+  document.getElementById("modal-star").textContent = currentModalItem.starred ? "⭐" : "☆";
+  buildTimeline();
+  await updateExhibitionRemote(currentModalItem);
+});
+
+document.getElementById("modal-delete").addEventListener("click", async ()=>{
+  if(!currentModalItem) return;
+  if(!confirm(`確定要刪除「${currentModalItem.title}」嗎？`)) return;
+  const target = currentModalItem;
+  const idx = EXHIBITIONS.indexOf(target);
+  if(idx > -1) EXHIBITIONS.splice(idx, 1);
+  modalOverlay.classList.remove("open");
+  currentModalItem = null;
+  buildTimeline();
+  await deleteExhibitionRemote(target.id);
+});
+
+/* ---------- add form ---------- */
+const formOverlay = document.getElementById("form-overlay");
+let editingItem = null;
+
+function openForm(prefillItem){
+  editingItem = prefillItem || null;
+  document.getElementById("form-title").textContent = editingItem ? "編輯展覽" : "新增展覽";
+  document.getElementById("f-save").textContent = editingItem ? "儲存修改" : "加入軸線";
+  document.getElementById("f-title").value = editingItem ? editingItem.title : "";
+  document.getElementById("f-region").value = editingItem ? editingItem.region : "north";
+  document.getElementById("f-venue").value = editingItem ? editingItem.venue : "";
+  document.getElementById("f-start").value = editingItem ? editingItem.start : "";
+  document.getElementById("f-end").value = editingItem ? editingItem.end : "";
+  document.getElementById("f-image").value = editingItem ? (editingItem.image || "") : "";
+  document.getElementById("f-url").value = editingItem ? (editingItem.url || "") : "";
+  document.getElementById("f-desc").value = editingItem ? (editingItem.desc || "") : "";
+  document.getElementById("f-image-file").value = "";
+  formOverlay.classList.add("open");
+}
+
+document.getElementById("btn-add").addEventListener("click", ()=>openForm(null));
+document.getElementById("f-cancel").addEventListener("click", ()=>{ editingItem=null; formOverlay.classList.remove("open"); });
+formOverlay.addEventListener("click", e=>{ if(e.target===formOverlay) formOverlay.classList.remove("open"); });
+
+document.getElementById("modal-edit").addEventListener("click", ()=>{
+  if(!currentModalItem) return;
+  modalOverlay.classList.remove("open");
+  openForm(currentModalItem);
+});
+
+document.getElementById("f-save").addEventListener("click", ()=>{
+  const title = document.getElementById("f-title").value.trim();
+  const start = document.getElementById("f-start").value;
+  const end = document.getElementById("f-end").value;
+  if(!title || !start || !end){ alert("請至少填寫展覽名稱、開始日期與結束日期。"); return; }
+  if(new Date(end) < new Date(start)){ alert("結束日期不能早於開始日期。"); return; }
+
+  const region = document.getElementById("f-region").value;
+  const venue = document.getElementById("f-venue").value.trim();
+  const urlVal = document.getElementById("f-url").value.trim();
+  const desc = document.getElementById("f-desc").value.trim();
+  const urlImage = document.getElementById("f-image").value.trim();
+  const fileInput = document.getElementById("f-image-file");
+  const file = fileInput.files[0];
+
+  async function addItem(imageValue){
+    const payload = { title, region, venue, start, end, image: imageValue, url: urlVal, desc };
+    if(editingItem){
+      Object.assign(editingItem, payload);
+      buildTimeline();
+      await updateExhibitionRemote(editingItem);
+    } else {
+      buildTimeline(); // not yet, wait for insert to get id first
+      const saved = await insertExhibitionRemote(payload);
+      if(saved){
+        EXHIBITIONS.push(saved);
+      } else {
+        // Supabase 沒接上或失敗時，至少保留在本機記憶體
+        EXHIBITIONS.push({ id: null, ...payload });
+      }
+      buildTimeline();
+    }
+    ["f-title","f-venue","f-image","f-url","f-desc"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("f-start").value=""; document.getElementById("f-end").value="";
+    fileInput.value = "";
+    editingItem = null;
+    formOverlay.classList.remove("open");
+  }
+
+  if(file){
+    const reader = new FileReader();
+    reader.onload = () => addItem(reader.result);
+    reader.readAsDataURL(file);
+  } else {
+    addItem(urlImage);
+  }
+});
+
+/* ---------- export / import ---------- */
+document.getElementById("btn-export").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(EXHIBITIONS, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "exhibitions.json";
+  a.click();
+});
+const importInput = document.getElementById("import-input");
+document.getElementById("btn-import").addEventListener("click", ()=>importInput.click());
+importInput.addEventListener("change", ()=>{
+  const file = importInput.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!Array.isArray(data)) throw new Error("格式錯誤");
+      if(hasSupabase){
+        if(!confirm(`匯入將會覆蓋雲端目前的 ${EXHIBITIONS.length} 筆資料，確定要繼續嗎？`)) return;
+        await replaceAllRemote(data);
+        EXHIBITIONS = await fetchExhibitionsRemote();
+      } else {
+        EXHIBITIONS = data;
+      }
+      buildTimeline();
+    }catch(err){
+      alert("匯入失敗，請確認是先前用「匯出資料」產生的 JSON 檔。");
+    }
+  };
+  reader.readAsText(file);
+  importInput.value = "";
+});
+
+/* ---------- Supabase persistence ---------- */
+const SUPABASE_URL = "https://kvdaqbmklrglowywijaf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7Fsu-VFgs0xqZBmCzSCirw_sBEgNcqd";
+const hasSupabase = typeof window.supabase !== "undefined";
+const sb = hasSupabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+function fromRow(row){
+  return {
+    id: row.id,
+    title: row.title,
+    region: row.region,
+    venue: row.venue,
+    start: row.start_date,
+    end: row.end_date,
+    image: row.image,
+    url: row.url,
+    desc: row.description,
+    starred: !!row.starred
+  };
+}
+function toRow(item){
+  return {
+    title: item.title,
+    region: item.region,
+    venue: item.venue || "",
+    start_date: item.start,
+    end_date: item.end,
+    image: item.image || "",
+    url: item.url || "",
+    description: item.desc || "",
+    starred: !!item.starred
+  };
+}
+
+async function fetchExhibitionsRemote(){
+  if(!hasSupabase) return null;
+  try{
+    const { data, error } = await sb.from("exhibitions").select("*").order("end_date", { ascending:true });
+    if(error) throw error;
+    return data.map(fromRow);
+  }catch(err){
+    console.error("讀取雲端資料失敗：", err);
+    return null;
+  }
+}
+
+async function insertExhibitionRemote(item){
+  if(!hasSupabase) return null;
+  try{
+    const { data, error } = await sb.from("exhibitions").insert(toRow(item)).select().single();
+    if(error) throw error;
+    return fromRow(data);
+  }catch(err){
+    console.error("新增失敗：", err);
+    alert("新增到雲端失敗，先保留在這個分頁裡：" + err.message);
+    return null;
+  }
+}
+
+async function updateExhibitionRemote(item){
+  if(!hasSupabase || !item.id) return;
+  try{
+    const { error } = await sb.from("exhibitions").update(toRow(item)).eq("id", item.id);
+    if(error) throw error;
+  }catch(err){
+    console.error("更新失敗：", err);
+    alert("更新到雲端失敗：" + err.message);
+  }
+}
+
+async function deleteExhibitionRemote(id){
+  if(!hasSupabase || !id) return;
+  try{
+    const { error } = await sb.from("exhibitions").delete().eq("id", id);
+    if(error) throw error;
+  }catch(err){
+    console.error("刪除失敗：", err);
+    alert("從雲端刪除失敗：" + err.message);
+  }
+}
+
+async function replaceAllRemote(items){
+  if(!hasSupabase) return;
+  try{
+    const { error: delErr } = await sb.from("exhibitions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if(delErr) throw delErr;
+    for(const item of items){
+      const { error } = await sb.from("exhibitions").insert(toRow(item));
+      if(error) throw error;
+    }
+  }catch(err){
+    console.error("匯入到雲端失敗：", err);
+    alert("匯入到雲端時發生錯誤：" + err.message);
+  }
+}
+
+async function initApp(){
+  const note = document.getElementById("storage-note");
+  if(hasSupabase){
+    const remote = await fetchExhibitionsRemote();
+    if(remote && remote.length > 0){
+      EXHIBITIONS = remote;
+    } else if(remote && remote.length === 0){
+      // 資料表是空的，把內建範例種進去，之後就都在雲端了
+      for(const item of EXHIBITIONS){
+        await insertExhibitionRemote(item);
+      }
+      const seeded = await fetchExhibitionsRemote();
+      if(seeded) EXHIBITIONS = seeded;
+    }
+    // remote 為 null 代表連線失敗，保留原本內建的範例資料（僅本機記憶體）
+    if(note){
+      note.textContent = remote
+        ? "資料已連接 Supabase，任何裝置、任何瀏覽器打開都會看到同一份。"
+        : "目前連不上 Supabase，先在這個分頁暫存，請確認網路連線或稍後再試。";
+    }
+  } else {
+    if(note) note.textContent = "目前無法連接雲端資料庫，修改完請用「匯出資料」存檔，下次用「匯入資料」讀回來。";
+  }
+  buildTimeline();
+}
+initApp();
+</script>
+</body>
+</html>
