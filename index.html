@@ -332,13 +332,19 @@
     align-items:center;
     justify-content:flex-start;
     padding:0 14px;
-    white-space:nowrap;
     overflow:hidden;
-    text-overflow:ellipsis;
     cursor:pointer;
     min-width:34px;
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(38,34,30,0.08);
     transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .bar-label{
+    display:inline-block;
+    min-width:0;
+    max-width:100%;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .bar:hover, .bar:focus-visible{
     transform:translateY(-1px);
@@ -835,7 +841,12 @@ function buildTimeline(){
         bar.style.width = width + "px";
         bar.style.top = (item._row*ROW_H_VAL() + (ROW_H_VAL()-BAR_H_VAL())/2) + "px";
         bar.style.background = `var(--${region}-fill)`;
-        bar.textContent = (item.starred ? "⭐ " : "") + item.title;
+        bar.dataset.left = left;
+        bar.dataset.width = width;
+        const label = document.createElement("span");
+        label.className = "bar-label";
+        label.textContent = (item.starred ? "⭐ " : "") + item.title;
+        bar.appendChild(label);
         bar.title = `${item.title}（${item.start} → ${item.end}）`;
         bar.tabIndex = 0;
         bar.addEventListener("click", ()=>openModal(item));
@@ -880,9 +891,11 @@ function buildTimeline(){
     requestAnimationFrame(()=>{
       document.getElementById("gantt-scroll").scrollLeft = Math.max(tx - 160, 0);
       if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
+      if(typeof updateBarLabelPositions === "function") updateBarLabelPositions();
     });
   }
   if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
+  if(typeof updateBarLabelPositions === "function") updateBarLabelPositions();
 }
 
 function ROW_H_VAL(){ return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row-h')); }
@@ -947,6 +960,34 @@ function showHoverAt(clientX){
 })();
 
 /* ---------- draggable scrollbar above the chart ---------- */
+/* ---------- keep long bar labels visible while scrolling ---------- */
+function updateBarLabelPositions(){
+  const scrollEl = document.getElementById("gantt-scroll");
+  if(!scrollEl) return;
+  const scrollLeft = scrollEl.scrollLeft;
+  const bars = document.querySelectorAll(".bar");
+  bars.forEach(bar=>{
+    const barLeft = parseFloat(bar.dataset.left || "0");
+    const barWidth = parseFloat(bar.dataset.width || "0");
+    const label = bar.querySelector(".bar-label");
+    if(!label) return;
+    const visibleStart = Math.max(scrollLeft - barLeft, 0);
+    const maxShift = Math.max(barWidth - 40, 0);
+    const shift = Math.min(visibleStart, maxShift);
+    label.style.transform = shift > 0 ? `translateX(${shift}px)` : "";
+  });
+}
+(function initBarLabelTracking(){
+  const scrollEl = document.getElementById("gantt-scroll");
+  if(!scrollEl) return;
+  let ticking = false;
+  scrollEl.addEventListener("scroll", ()=>{
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(()=>{ updateBarLabelPositions(); ticking = false; });
+  });
+})();
+
 (function initGanttScrollbar(){
   const scrollEl = document.getElementById("gantt-scroll");
   const track = document.getElementById("gantt-scrollbar");
