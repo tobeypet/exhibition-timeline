@@ -1691,6 +1691,7 @@ async function renderMap(){
   const abroadCount = EXHIBITIONS.length - taiwanItems.length;
 
   const bounds = [];
+  const coordCounts = {};
   const missing = [];
 
   taiwanItems.forEach(item=>{
@@ -1702,7 +1703,18 @@ async function renderMap(){
   });
 
   function addMarker(item){
-    const marker = L.marker([item.lat, item.lng], { icon: buildMapPinIcon(item.region, item.starred) });
+    const key = item.lat.toFixed(3) + "," + item.lng.toFixed(3);
+    const occurrence = coordCounts[key] || 0;
+    coordCounts[key] = occurrence + 1;
+    let lat = item.lat, lng = item.lng;
+    if(occurrence > 0){
+      // 座標幾乎重疊時，依黃金角度小幅錯開，避免完全蓋住
+      const angle = occurrence * 137.5 * (Math.PI / 180);
+      const radius = 0.0025 * occurrence;
+      lat += Math.cos(angle) * radius;
+      lng += Math.sin(angle) * radius;
+    }
+    const marker = L.marker([lat, lng], { icon: buildMapPinIcon(item.region, item.starred) });
     const catLabel = item.category === "market" ? "市集" : "展覽";
     const tagColor = regionColorSolid(item.region);
     marker.bindPopup(`
@@ -1714,9 +1726,8 @@ async function renderMap(){
         ${item.url ? `<a class="mp-link" href="${item.url}" target="_blank" rel="noopener">前往展覽頁面 →</a>` : ""}
       </div>
     `);
-    marker.on("click", ()=>{ /* popup opens by default; detail modal available via list below if needed */ });
     marker.addTo(mapMarkersLayer);
-    bounds.push([item.lat, item.lng]);
+    bounds.push([lat, lng]);
   }
 
   if(bounds.length > 0){
