@@ -471,17 +471,23 @@
   .modal-actions{ display:flex; gap:16px; align-items:center; }
   .modal-actions a.visit{
     color:var(--ink); text-decoration:none;
-    font-size:1.35rem;
+    font-size:1.5rem;
     line-height:1;
     opacity:0.85;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
   .modal-actions a.visit:hover{opacity:1;}
   .modal-delete{
     background:none; border:none; padding:0;
-    font-size:1.35rem;
+    font-size:1.5rem;
     line-height:1;
     cursor:pointer;
     opacity:0.85;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
   .modal-delete:hover{opacity:1;}
   .modal-edit{
@@ -628,8 +634,25 @@
       </div>
       <p class="desc" id="modal-desc"></p>
       <div class="modal-actions">
-        <a class="visit" id="modal-link" href="#" target="_blank" rel="noopener" title="前往展覽頁面">🌐</a>
-        <button class="modal-delete" id="modal-delete" title="刪除這個展覽">🗑️</button>
+        <a class="visit" id="modal-link" href="#" target="_blank" rel="noopener" title="前往展覽頁面">
+          <svg viewBox="0 0 100 100" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#4F9FE0" stroke-width="7"/>
+            <ellipse cx="50" cy="50" rx="18" ry="42" fill="none" stroke="#4F9FE0" stroke-width="7"/>
+            <line x1="8" y1="50" x2="92" y2="50" stroke="#4F9FE0" stroke-width="7"/>
+            <line x1="16" y1="28" x2="84" y2="28" stroke="#4F9FE0" stroke-width="6"/>
+            <line x1="16" y1="72" x2="84" y2="72" stroke="#4F9FE0" stroke-width="6"/>
+          </svg>
+        </a>
+        <button class="modal-delete" id="modal-delete" title="刪除這個展覽">
+          <svg viewBox="0 0 100 100" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
+            <rect x="38" y="8" width="24" height="14" rx="4" fill="none" stroke="#5B6B7C" stroke-width="6"/>
+            <rect x="18" y="20" width="64" height="14" rx="3" fill="#8FD9C4"/>
+            <path d="M22 38 L78 38 L70 92 Q69 96 65 96 L35 96 Q31 96 30 92 Z" fill="#5B6B7C"/>
+            <rect x="35" y="46" width="6" height="42" rx="3" fill="#8FD9C4"/>
+            <rect x="47" y="46" width="6" height="42" rx="3" fill="#8FD9C4"/>
+            <rect x="59" y="46" width="6" height="42" rx="3" fill="#8FD9C4"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
