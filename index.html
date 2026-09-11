@@ -225,6 +225,33 @@
     overflow:hidden;
     box-shadow:var(--glass-shadow);
   }
+  .gantt-right{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .gantt-scrollbar{
+    flex-shrink:0;
+    height:10px;
+    margin:10px 12px 2px;
+    background:rgba(38,34,30,0.08);
+    border-radius:999px;
+    position:relative;
+    cursor:pointer;
+  }
+  .gantt-scrollbar.is-hidden{ display:none; }
+  .gantt-scrollbar-thumb{
+    position:absolute;
+    top:0; left:0;
+    height:100%;
+    min-width:24px;
+    background:rgba(38,34,30,0.32);
+    border-radius:999px;
+    cursor:grab;
+  }
+  .gantt-scrollbar-thumb:hover{ background:rgba(38,34,30,0.45); }
+  .gantt-scrollbar-thumb.dragging{ cursor:grabbing; background:rgba(38,34,30,0.55); }
   .gantt-labels{
     flex:0 0 68px;
   }
@@ -303,7 +330,7 @@
     font-weight:700;
     display:flex;
     align-items:center;
-    justify-content:center;
+    justify-content:flex-start;
     padding:0 14px;
     white-space:nowrap;
     overflow:hidden;
@@ -328,7 +355,7 @@
     position:absolute;
     top:0; bottom:0;
     width:1px;
-    background:var(--accent);
+    background:#8A857C;
     z-index:2;
   }
   .today-line span{
@@ -336,15 +363,15 @@
     top:6px; left:6px;
     font-size:0.72rem;
     font-weight:700;
-    color:var(--accent);
+    color:#8A857C;
     white-space:nowrap;
   }
 
   .hover-line{
     position:absolute;
     top:0; bottom:0;
-    width:2px;
-    background:#E4363D;
+    width:1px;
+    background:#B7B2AA;
     z-index:3;
     pointer-events:none;
     display:none;
@@ -355,7 +382,7 @@
     margin-left:auto;
     font-weight:800;
     font-size:0.92rem;
-    color:#E4363D;
+    color:#57534C;
     min-width:1px;
   }
 
@@ -459,6 +486,9 @@
     line-height:1;
     cursor:pointer;
     opacity:0.85;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
   .modal-edit:hover{opacity:1;}
   .modal-star{
@@ -540,8 +570,13 @@
   <div class="gantt-legend" id="legend"></div>
   <div class="gantt-container">
     <div class="gantt-labels" id="gantt-labels"></div>
-    <div class="gantt-scroll" id="gantt-scroll">
-      <div class="gantt-scroll-inner" id="gantt-inner"></div>
+    <div class="gantt-right">
+      <div class="gantt-scrollbar" id="gantt-scrollbar">
+        <div class="gantt-scrollbar-thumb" id="gantt-scrollbar-thumb"></div>
+      </div>
+      <div class="gantt-scroll" id="gantt-scroll">
+        <div class="gantt-scroll-inner" id="gantt-inner"></div>
+      </div>
     </div>
   </div>
 </main>
@@ -552,7 +587,6 @@
 <div class="sticky-note notepad-panel" id="notepad-panel">
   <span class="fold"></span>
   <button class="notepad-close" id="notepad-close" title="關閉">✕</button>
-  <h2>便條紙</h2>
   <textarea id="notepad-text" placeholder="先記下想加進時間軸的展覽或市集&#10;想到什麼就寫&#10;之後再慢慢整理成正式資料"></textarea>
   <p class="notepad-status" id="notepad-status"></p>
 </div>
@@ -566,7 +600,20 @@
     </div>
     <div class="modal-body">
       <button class="modal-star" id="modal-star" title="標示為必看展覽">☆</button>
-      <button class="modal-edit" id="modal-edit" title="編輯展覽">✏️</button>
+      <button class="modal-edit" id="modal-edit" title="編輯展覽">
+        <svg viewBox="0 0 100 100" width="1em" height="1em" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23 12H73V78H50L23 91V12Z" fill="#fff" stroke="#5B6B7C" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M50 78H73L50 91V78Z" fill="#fff" stroke="#5B6B7C" stroke-width="6" stroke-linejoin="round"/>
+          <rect x="33" y="27" width="28" height="8" rx="1" fill="#66C3A6"/>
+          <rect x="33" y="42" width="28" height="8" rx="1" fill="#66C3A6"/>
+          <rect x="33" y="57" width="14" height="8" rx="1" fill="#66C3A6"/>
+          <g transform="rotate(45 70 30)">
+            <rect x="60" y="8" width="18" height="52" rx="3" fill="#B7E4D6" stroke="#5B6B7C" stroke-width="5"/>
+            <path d="M60 52H78L69 66Z" fill="#5B6B7C"/>
+            <circle cx="69" cy="12" r="9" fill="#5B6B7C"/>
+          </g>
+        </svg>
+      </button>
       <span class="region-tag" id="modal-region-tag"></span>
       <h2 id="modal-title"></h2>
       <div class="meta">
@@ -704,6 +751,8 @@ function buildTimeline(){
   if(EXHIBITIONS.length === 0){
     labelsEl.innerHTML = "";
     innerEl.innerHTML = `<div class="empty-hint">目前沒有展覽資料，點上方「新增展覽」加入第一筆，或「匯入資料」讀取 json 檔。</div>`;
+    const sb = document.getElementById("gantt-scrollbar");
+    if(sb) sb.classList.add("is-hidden");
     return;
   }
 
@@ -830,8 +879,10 @@ function buildTimeline(){
     // scroll into view
     requestAnimationFrame(()=>{
       document.getElementById("gantt-scroll").scrollLeft = Math.max(tx - 160, 0);
+      if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
     });
   }
+  if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
 }
 
 function ROW_H_VAL(){ return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row-h')); }
@@ -893,6 +944,80 @@ function showHoverAt(clientX){
     if(e.touches && e.touches[0]) showHoverAt(e.touches[0].clientX);
   }, { passive:true });
   scrollEl.addEventListener("touchend", hideHoverLine);
+})();
+
+/* ---------- draggable scrollbar above the chart ---------- */
+(function initGanttScrollbar(){
+  const scrollEl = document.getElementById("gantt-scroll");
+  const track = document.getElementById("gantt-scrollbar");
+  const thumb = document.getElementById("gantt-scrollbar-thumb");
+  if(!scrollEl || !track || !thumb) return;
+
+  function metrics(){
+    const trackWidth = track.clientWidth;
+    const contentWidth = scrollEl.scrollWidth;
+    const visibleWidth = scrollEl.clientWidth;
+    const thumbWidth = Math.min(trackWidth, Math.max((visibleWidth / contentWidth) * trackWidth, 24));
+    const maxThumbLeft = Math.max(trackWidth - thumbWidth, 0);
+    const scrollableContent = Math.max(contentWidth - visibleWidth, 0);
+    return { trackWidth, contentWidth, visibleWidth, thumbWidth, maxThumbLeft, scrollableContent };
+  }
+
+  function updateScrollbar(){
+    const m = metrics();
+    if(m.scrollableContent <= 0){ track.classList.add("is-hidden"); return; }
+    track.classList.remove("is-hidden");
+    const ratio = m.scrollableContent > 0 ? scrollEl.scrollLeft / m.scrollableContent : 0;
+    thumb.style.width = m.thumbWidth + "px";
+    thumb.style.left = (ratio * m.maxThumbLeft) + "px";
+  }
+
+  let dragging = false, dragStartX = 0, dragStartScrollLeft = 0;
+
+  function startDrag(clientX){
+    dragging = true;
+    dragStartX = clientX;
+    dragStartScrollLeft = scrollEl.scrollLeft;
+    thumb.classList.add("dragging");
+  }
+  function moveDrag(clientX){
+    if(!dragging) return;
+    const m = metrics();
+    if(m.maxThumbLeft <= 0) return;
+    const dx = clientX - dragStartX;
+    const deltaScroll = (dx / m.maxThumbLeft) * m.scrollableContent;
+    scrollEl.scrollLeft = dragStartScrollLeft + deltaScroll;
+  }
+  function endDrag(){
+    dragging = false;
+    thumb.classList.remove("dragging");
+  }
+
+  thumb.addEventListener("mousedown", e=>{ e.preventDefault(); startDrag(e.clientX); });
+  window.addEventListener("mousemove", e=> moveDrag(e.clientX));
+  window.addEventListener("mouseup", endDrag);
+
+  thumb.addEventListener("touchstart", e=>{
+    if(e.touches[0]) startDrag(e.touches[0].clientX);
+  }, { passive:true });
+  window.addEventListener("touchmove", e=>{
+    if(dragging && e.touches[0]) moveDrag(e.touches[0].clientX);
+  }, { passive:true });
+  window.addEventListener("touchend", endDrag);
+
+  track.addEventListener("click", e=>{
+    if(e.target === thumb) return;
+    const m = metrics();
+    if(m.maxThumbLeft <= 0) return;
+    const rect = track.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const targetLeft = Math.min(Math.max(clickX - m.thumbWidth / 2, 0), m.maxThumbLeft);
+    scrollEl.scrollLeft = (targetLeft / m.maxThumbLeft) * m.scrollableContent;
+  });
+
+  scrollEl.addEventListener("scroll", updateScrollbar);
+  window.addEventListener("resize", updateScrollbar);
+  window.__updateGanttScrollbar = updateScrollbar;
 })();
 
 /* ---------- modal ---------- */
