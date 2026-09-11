@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root{
     --paper: #F3ECF7;
@@ -17,10 +18,10 @@
     --accent: #E36269;
     --accent-soft: #FBDCDC;
     --header-cell: rgba(207,225,236,0.75);
-    --north: #D98CB3;      --north-fill: rgba(243,214,229,0.8);
-    --central: #7CAE73;    --central-fill: rgba(219,234,214,0.8);
-    --south: #E0964E;      --south-fill: rgba(248,226,196,0.8);
-    --abroad: #4EA6B8;     --abroad-fill: rgba(210,236,240,0.8);
+    --north: #D98CB3;      --north-fill: rgba(243,214,229,0.8);      --north-market: rgba(226,120,163,0.88);
+    --central: #7CAE73;    --central-fill: rgba(219,234,214,0.8);    --central-market: rgba(140,190,120,0.88);
+    --south: #E0964E;      --south-fill: rgba(248,226,196,0.8);      --south-market: rgba(224,150,70,0.88);
+    --abroad: #4EA6B8;     --abroad-fill: rgba(210,236,240,0.8);     --abroad-market: rgba(90,180,195,0.88);
     --glass-blur: 20px;
     --glass-border: rgba(255,255,255,0.65);
     --glass-shadow: 0 8px 32px rgba(70,50,100,0.12);
@@ -112,6 +113,87 @@
     margin:0 auto;
     padding:40px 24px 100px;
   }
+
+  /* ---------- view tabs ---------- */
+  .view-tabs{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px;
+    display:flex;
+    gap:6px;
+  }
+  .view-tab{
+    font-family:var(--sans);
+    font-size:0.9rem;
+    font-weight:700;
+    padding:10px 20px;
+    border:1px solid rgba(255,255,255,0.7);
+    border-bottom:none;
+    border-radius:14px 14px 0 0;
+    background:rgba(255,255,255,0.3);
+    color:var(--ink-soft);
+    cursor:pointer;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .view-tab.active{
+    background:var(--paper-raised);
+    color:var(--ink);
+    box-shadow:0 -2px 8px rgba(70,50,100,0.08);
+  }
+
+  /* ---------- map view ---------- */
+  main.map-section{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px 100px;
+  }
+  .map-container{
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:var(--glass-shadow);
+  }
+  #taiwan-map{
+    height:600px;
+    width:100%;
+    background:#EAF3F0;
+  }
+  .map-note{
+    font-size:0.82rem;
+    color:var(--ink-soft);
+    margin:14px 2px 0;
+  }
+  .map-unlocated{
+    margin-top:10px;
+  }
+  .map-unlocated-item{
+    font-size:0.82rem;
+    color:var(--ink-soft);
+    padding:4px 0;
+  }
+  .map-pin{
+    width:26px; height:26px;
+    border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    border:2px solid #fff;
+    box-shadow:0 2px 6px rgba(38,34,30,0.35);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .map-pin span{ transform:rotate(45deg); font-size:11px; }
+  .leaflet-popup-content-wrapper{
+    border-radius:14px;
+    background:rgba(255,255,255,0.92);
+  }
+  .map-popup{ font-family:var(--sans); }
+  .map-popup .mp-tag{
+    display:inline-block; font-size:0.7rem; font-weight:700;
+    color:#fff; padding:2px 8px; border-radius:999px; margin-bottom:6px;
+  }
+  .map-popup .mp-title{ font-weight:800; font-size:0.92rem; margin:0 0 4px; }
+  .map-popup .mp-venue{ font-size:0.78rem; color:#6b6660; margin:0 0 2px; }
+  .map-popup .mp-dates{ font-size:0.76rem; color:#6b6660; margin:0 0 6px; }
+  .map-popup .mp-link{ font-size:0.78rem; font-weight:700; color:#4F9FE0; text-decoration:none; }
 
   /* ---------- floating sticky-note notepad ---------- */
   .sticky-note{
@@ -214,6 +296,10 @@
   }
   .gantt-legend span{ display:inline-flex; align-items:center; gap:6px; }
   .gantt-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .cat-legend{ display:inline-flex; align-items:center; gap:4px; }
+  .cat-swatch{ width:12px; height:12px; border-radius:4px; display:inline-block; margin-left:6px; }
+  .cat-swatch.light{ background:rgba(150,150,150,0.35); margin-left:0; }
+  .cat-swatch.deep{ background:rgba(90,90,90,0.75); }
 
   .gantt-container{
     display:flex;
@@ -448,7 +534,7 @@
   }
   .modal-media.broken img{ display:none; }
   .modal-media.broken .modal-img-fallback{ display:flex; }
-  .modal-body{padding:52px 28px 32px; position:relative;}
+  .modal-body{padding:52px 28px 56px; position:relative;}
   .modal-body .region-tag{
     display:inline-block; font-size:0.76rem; font-weight:700;
     padding:4px 12px; border-radius:var(--radius-tag); margin-bottom:14px;
@@ -468,7 +554,11 @@
   }
   .modal-body .meta a#modal-venue:hover{ color:var(--ink); border-color:var(--ink); }
   .modal-body p.desc{ font-size:0.96rem; color:var(--ink); margin:0 0 24px; }
-  .modal-actions{ display:flex; gap:16px; align-items:center; }
+  .modal-actions{
+    position:absolute;
+    bottom:20px; left:20px;
+    display:flex; gap:16px; align-items:center;
+  }
   .modal-actions a.visit{
     color:var(--ink); text-decoration:none;
     font-size:1.5rem;
@@ -480,6 +570,8 @@
   }
   .modal-actions a.visit:hover{opacity:1;}
   .modal-delete{
+    position:absolute;
+    bottom:20px; right:20px;
     background:none; border:none; padding:0;
     font-size:1.5rem;
     line-height:1;
@@ -530,7 +622,39 @@
     max-width:520px; width:100%; border-radius:22px; padding:28px;
     box-shadow:0 24px 60px rgba(70,50,100,0.2);
   }
-  .form-card h2{ font-family:var(--serif); font-size:1.3rem; margin:0 0 18px; }
+  .form-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 0 18px;
+  }
+  .form-card h2{ font-family:var(--serif); font-size:1.3rem; margin:0; }
+  .category-toggle{
+    display:flex;
+    gap:4px;
+    padding:3px;
+    background:rgba(38,34,30,0.06);
+    border-radius:999px;
+    flex-shrink:0;
+  }
+  .cat-btn{
+    font-family:var(--sans);
+    font-size:0.8rem;
+    font-weight:700;
+    padding:6px 14px;
+    border-radius:999px;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .cat-btn.active{
+    background:linear-gradient(135deg, #9C8CF5, #6FD6C8);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(139,124,246,0.35);
+  }
   .form-card label{ display:block; font-size:0.82rem; font-weight:600; color:var(--ink-soft); margin:14px 0 6px; }
   .form-card input, .form-card textarea, .form-card select{
     width:100%; font-family:var(--sans); font-size:0.92rem;
@@ -558,8 +682,12 @@
     .gantt-legend{ gap:12px; font-size:0.76rem; margin-bottom:12px; }
     :root{ --row-h:56px; --bar-h:34px; }
     .toolbar button{ padding:9px 14px; font-size:0.82rem; }
-    .modal-body{ padding:48px 20px 26px; }
+    .modal-body{ padding:48px 20px 52px; }
     .form-card{ padding:22px; }
+    .view-tabs{ padding:0 12px; }
+    .view-tab{ padding:9px 14px; font-size:0.82rem; }
+    main.map-section{ padding:0 12px 100px; }
+    #taiwan-map{ height:420px; }
   }
 </style>
 </head>
@@ -578,7 +706,12 @@
   <p class="storage-note" id="storage-note"></p>
 </header>
 
-<main class="gantt-section">
+<div class="view-tabs" id="view-tabs">
+  <button class="view-tab active" data-view="timeline">時間軸</button>
+  <button class="view-tab" data-view="map">地圖</button>
+</div>
+
+<main class="gantt-section" id="view-timeline">
   <div class="gantt-legend" id="legend"></div>
   <div class="gantt-container">
     <div class="gantt-labels" id="gantt-labels"></div>
@@ -591,6 +724,15 @@
       </div>
     </div>
   </div>
+</main>
+
+<main class="map-section" id="view-map" style="display:none;">
+  <div class="gantt-legend" id="map-legend"></div>
+  <div class="map-container">
+    <div id="taiwan-map"></div>
+  </div>
+  <p class="map-note" id="map-note"></p>
+  <div class="map-unlocated" id="map-unlocated"></div>
 </main>
 
 <button class="sticky-note notepad-fab" id="notepad-fab" title="便條紙">
@@ -643,7 +785,8 @@
             <line x1="16" y1="72" x2="84" y2="72" stroke="#4F9FE0" stroke-width="6"/>
           </svg>
         </a>
-        <button class="modal-delete" id="modal-delete" title="刪除這個展覽">
+      </div>
+      <button class="modal-delete" id="modal-delete" title="刪除這個展覽">
           <svg viewBox="0 0 100 100" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
             <rect x="38" y="8" width="24" height="14" rx="4" fill="none" stroke="#5B6B7C" stroke-width="6"/>
             <rect x="18" y="20" width="64" height="14" rx="3" fill="#8FD9C4"/>
@@ -656,11 +799,16 @@
       </div>
     </div>
   </div>
-</div>
 
 <div class="form-overlay" id="form-overlay">
   <div class="form-card">
-    <h2 id="form-title">新增展覽</h2>
+    <div class="form-head">
+      <h2 id="form-title">新增展覽</h2>
+      <div class="category-toggle" id="category-toggle">
+        <button type="button" class="cat-btn active" data-category="exhibition" id="cat-exhibition">展覽</button>
+        <button type="button" class="cat-btn" data-category="market" id="cat-market">市集</button>
+      </div>
+    </div>
     <label>展覽名稱</label>
     <input type="text" id="f-title" placeholder="例如：光影劇場">
     <div class="row2">
@@ -706,6 +854,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /* -----------------------------------------------------------
    資料：以下為範例展覽，請直接編輯這個陣列，
@@ -775,6 +924,7 @@ function buildTimeline(){
     legendEl.innerHTML += `<span><i style="background:var(--${r})"></i>${REGION_LABEL[r]}</span>`;
   });
   legendEl.innerHTML += `<span>⭐ 必看展覽</span>`;
+  legendEl.innerHTML += `<span class="cat-legend"><i class="cat-swatch light"></i>展覽　<i class="cat-swatch deep"></i>市集</span>`;
   legendEl.innerHTML += `<span class="hover-readout" id="hover-readout"></span>`;
 
   if(EXHIBITIONS.length === 0){
@@ -863,7 +1013,8 @@ function buildTimeline(){
         bar.style.left = left + "px";
         bar.style.width = width + "px";
         bar.style.top = (item._row*ROW_H_VAL() + (ROW_H_VAL()-BAR_H_VAL())/2) + "px";
-        bar.style.background = `var(--${region}-fill)`;
+        const colorVar = item.category === "market" ? `--${region}-market` : `--${region}-fill`;
+        bar.style.background = `var(${colorVar})`;
         bar.dataset.left = left;
         bar.dataset.width = width;
         const label = document.createElement("span");
@@ -1101,8 +1252,11 @@ function openModal(item){
     img.removeAttribute("src");
   }
   const tag = document.getElementById("modal-region-tag");
-  tag.textContent = REGION_LABEL[item.region] === "海外" ? "海外" : REGION_LABEL[item.region] + "部";
-  tag.style.background = `var(--${item.region})`;
+  const regionLabel = REGION_LABEL[item.region] === "海外" ? "海外" : REGION_LABEL[item.region] + "部";
+  const categoryLabel = item.category === "market" ? "市集" : "展覽";
+  tag.textContent = `${regionLabel}・${categoryLabel}`;
+  const tagColorVar = item.category === "market" ? `--${item.region}-market` : `--${item.region}`;
+  tag.style.background = `var(${tagColorVar})`;
   tag.style.color = "#fff";
   document.getElementById("modal-star").textContent = item.starred ? "⭐" : "☆";
   document.getElementById("modal-title").textContent = item.title;
@@ -1148,10 +1302,21 @@ document.getElementById("modal-delete").addEventListener("click", async ()=>{
 const formOverlay = document.getElementById("form-overlay");
 let editingItem = null;
 
+let currentCategory = "exhibition";
+function setCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll(".cat-btn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.category === cat);
+  });
+}
+document.getElementById("cat-exhibition").addEventListener("click", ()=> setCategory("exhibition"));
+document.getElementById("cat-market").addEventListener("click", ()=> setCategory("market"));
+
 function openForm(prefillItem){
   editingItem = prefillItem || null;
   document.getElementById("form-title").textContent = editingItem ? "編輯展覽" : "新增展覽";
   document.getElementById("f-save").textContent = editingItem ? "儲存修改" : "加入軸線";
+  setCategory(editingItem ? (editingItem.category || "exhibition") : "exhibition");
   document.getElementById("f-title").value = editingItem ? editingItem.title : "";
   document.getElementById("f-region").value = editingItem ? editingItem.region : "north";
   document.getElementById("f-venue").value = editingItem ? editingItem.venue : "";
@@ -1192,7 +1357,9 @@ document.getElementById("f-save").addEventListener("click", ()=>{
   const file = fileInput.files[0];
 
   async function addItem(imageValue){
-    const payload = { title, region, venue, address, start, end, image: imageValue, url: urlVal, desc };
+    const payload = { title, region, category: currentCategory, venue, address, start, end, image: imageValue, url: urlVal, desc };
+    const coords = await geocodeItem(payload);
+    if(coords){ payload.lat = coords.lat; payload.lng = coords.lng; }
     if(editingItem){
       Object.assign(editingItem, payload);
       buildTimeline();
@@ -1269,6 +1436,7 @@ function fromRow(row){
     id: row.id,
     title: row.title,
     region: row.region,
+    category: row.category || "exhibition",
     venue: row.venue,
     address: row.address,
     start: row.start_date,
@@ -1276,13 +1444,16 @@ function fromRow(row){
     image: row.image,
     url: row.url,
     desc: row.description,
-    starred: !!row.starred
+    starred: !!row.starred,
+    lat: row.lat != null ? Number(row.lat) : null,
+    lng: row.lng != null ? Number(row.lng) : null
   };
 }
 function toRow(item){
   return {
     title: item.title,
     region: item.region,
+    category: item.category || "exhibition",
     venue: item.venue || "",
     address: item.address || "",
     start_date: item.start,
@@ -1290,7 +1461,9 @@ function toRow(item){
     image: item.image || "",
     url: item.url || "",
     description: item.desc || "",
-    starred: !!item.starred
+    starred: !!item.starred,
+    lat: (item.lat != null && !isNaN(item.lat)) ? item.lat : null,
+    lng: (item.lng != null && !isNaN(item.lng)) ? item.lng : null
   };
 }
 
@@ -1420,6 +1593,159 @@ async function saveNote(content){
     });
   }
 })();
+
+/* ---------- geocoding (address -> lat/lng via Nominatim) ---------- */
+const REGION_BIAS = { north: "台灣 台北", central: "台灣 台中", south: "台灣 高雄", abroad: "" };
+
+async function geocodeQuery(query){
+  if(!query) return null;
+  try{
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { "Accept-Language": "zh-TW" } });
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(data && data[0]){
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  }catch(err){
+    console.error("地理編碼失敗：", err);
+  }
+  return null;
+}
+
+async function geocodeItem(item){
+  const bias = REGION_BIAS[item.region] || "";
+  const query = item.address && item.address.trim()
+    ? item.address.trim()
+    : [item.venue, bias].filter(Boolean).join(" ");
+  if(!query) return null;
+  return await geocodeQuery(query);
+}
+
+/* ---------- view tabs ---------- */
+(function initViewTabs(){
+  const tabs = document.querySelectorAll(".view-tab");
+  const timelineView = document.getElementById("view-timeline");
+  const mapView = document.getElementById("view-map");
+  tabs.forEach(tab=>{
+    tab.addEventListener("click", ()=>{
+      tabs.forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+      const isMap = tab.dataset.view === "map";
+      timelineView.style.display = isMap ? "none" : "block";
+      mapView.style.display = isMap ? "block" : "none";
+      if(isMap){
+        renderMap();
+        setTimeout(()=>{ if(mapInstance) mapInstance.invalidateSize(); }, 60);
+      }
+    });
+  });
+})();
+
+/* ---------- Taiwan map view ---------- */
+let mapInstance = null;
+let mapMarkersLayer = null;
+let mapHasRendered = false;
+
+function ensureMapInstance(){
+  if(mapInstance) return mapInstance;
+  mapInstance = L.map("taiwan-map", { scrollWheelZoom:true }).setView([23.7, 120.9], 7);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 18
+  }).addTo(mapInstance);
+  mapMarkersLayer = L.layerGroup().addTo(mapInstance);
+  return mapInstance;
+}
+
+function regionColorSolid(region){
+  return getComputedStyle(document.documentElement).getPropertyValue(`--${region}`).trim();
+}
+
+function buildMapPinIcon(region, starred){
+  const color = regionColorSolid(region) || "#888";
+  return L.divIcon({
+    className: "",
+    html: `<div class="map-pin" style="background:${color};">${starred ? "<span>⭐</span>" : ""}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 26],
+    popupAnchor: [0, -24]
+  });
+}
+
+async function renderMap(){
+  const map = ensureMapInstance();
+  const legendEl = document.getElementById("map-legend");
+  const noteEl = document.getElementById("map-note");
+  const unlocatedEl = document.getElementById("map-unlocated");
+
+  legendEl.innerHTML = "";
+  REGIONS.forEach(r=>{
+    legendEl.innerHTML += `<span><i style="background:var(--${r})"></i>${REGION_LABEL[r]}</span>`;
+  });
+  legendEl.innerHTML += `<span>⭐ 必看展覽</span>`;
+
+  mapMarkersLayer.clearLayers();
+
+  const taiwanItems = EXHIBITIONS.filter(x => x.region !== "abroad");
+  const abroadCount = EXHIBITIONS.length - taiwanItems.length;
+
+  const bounds = [];
+  const missing = [];
+
+  taiwanItems.forEach(item=>{
+    if(item.lat != null && item.lng != null && !isNaN(item.lat) && !isNaN(item.lng)){
+      addMarker(item);
+    } else {
+      missing.push(item);
+    }
+  });
+
+  function addMarker(item){
+    const marker = L.marker([item.lat, item.lng], { icon: buildMapPinIcon(item.region, item.starred) });
+    const catLabel = item.category === "market" ? "市集" : "展覽";
+    const tagColor = regionColorSolid(item.region);
+    marker.bindPopup(`
+      <div class="map-popup">
+        <span class="mp-tag" style="background:${tagColor}">${REGION_LABEL[item.region]}・${catLabel}</span>
+        <p class="mp-title">${item.title}</p>
+        <p class="mp-venue">${item.venue || ""}</p>
+        <p class="mp-dates">${item.start} → ${item.end}</p>
+        ${item.url ? `<a class="mp-link" href="${item.url}" target="_blank" rel="noopener">前往展覽頁面 →</a>` : ""}
+      </div>
+    `);
+    marker.on("click", ()=>{ /* popup opens by default; detail modal available via list below if needed */ });
+    marker.addTo(mapMarkersLayer);
+    bounds.push([item.lat, item.lng]);
+  }
+
+  if(bounds.length > 0){
+    map.fitBounds(bounds, { padding: [30,30], maxZoom: 12 });
+  }
+
+  let noteText = `地圖上顯示 ${bounds.length} 檔北中南展覽／市集的位置`;
+  if(abroadCount > 0) noteText += `，另有 ${abroadCount} 檔海外展覽不顯示在台灣地圖上`;
+  noteEl.textContent = noteText + "。";
+
+  // opportunistically geocode items missing coordinates, then persist + add marker
+  unlocatedEl.innerHTML = missing.length
+    ? `<p class="map-unlocated-item">正在定位 ${missing.length} 筆還沒有座標的展覽…</p>`
+    : "";
+
+  for(const item of missing){
+    const coords = await geocodeItem(item);
+    if(coords){
+      item.lat = coords.lat;
+      item.lng = coords.lng;
+      addMarker(item);
+      if(bounds.length > 0) map.fitBounds(bounds, { padding: [30,30], maxZoom: 12 });
+      updateExhibitionRemote(item);
+    }
+    await new Promise(r => setTimeout(r, 1100)); // respect Nominatim's 1 req/sec limit
+  }
+  unlocatedEl.innerHTML = "";
+  mapHasRendered = true;
+}
 
 async function initApp(){
   const note = document.getElementById("storage-note");
