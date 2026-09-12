@@ -462,8 +462,9 @@
     padding:0;
     justify-content:center;
   }
-  .bar-compact-star{
-    font-size:0.7em;
+  .bar-compact-initial{
+    font-size:0.78rem;
+    font-weight:800;
     line-height:1;
   }
   .bar:hover, .bar:focus-visible{
@@ -1063,12 +1064,10 @@ function buildTimeline(){
         bar.dataset.left = left;
         bar.dataset.width = width;
         if(isCompact){
-          if(item.starred){
-            const star = document.createElement("span");
-            star.className = "bar-compact-star";
-            star.textContent = "⭐";
-            bar.appendChild(star);
-          }
+          const initial = document.createElement("span");
+          initial.className = "bar-compact-initial";
+          initial.textContent = Array.from(item.title.trim())[0] || "";
+          bar.appendChild(initial);
         } else {
           const label = document.createElement("span");
           label.className = "bar-label";
