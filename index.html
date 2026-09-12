@@ -290,6 +290,13 @@
     .notepad-fab{ right:16px; bottom:16px; }
   }
 
+  .gantt-toolbar-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:0;
+  }
   .gantt-legend{
     display:flex; gap:18px; flex-wrap:wrap;
     margin-bottom:18px; font-size:0.82rem; color:var(--ink-soft);
@@ -298,6 +305,25 @@
   .gantt-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
   .cat-legend{ display:inline-flex; align-items:center; gap:4px; }
   .cat-swatch{ width:12px; height:12px; border-radius:4px; display:inline-block; margin-left:6px; }
+  .zoom-control{
+    display:flex; gap:4px; flex-shrink:0;
+  }
+  .zoom-control button{
+    width:30px; height:30px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.7);
+    background:rgba(255,255,255,0.45);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:var(--ink);
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(70,50,100,0.1);
+  }
+  .zoom-control button:hover{ background:rgba(255,255,255,0.65); }
+  .zoom-control button:disabled{ opacity:0.4; cursor:default; }
   .cat-swatch.light{ background:rgba(150,150,150,0.35); margin-left:0; }
   .cat-swatch.deep{ background:rgba(90,90,90,0.75); }
 
@@ -712,7 +738,13 @@
 </div>
 
 <main class="gantt-section" id="view-timeline">
-  <div class="gantt-legend" id="legend"></div>
+  <div class="gantt-toolbar-row">
+    <div class="gantt-legend" id="legend"></div>
+    <div class="zoom-control">
+      <button id="zoom-out" title="縮小，看更多月份">－</button>
+      <button id="zoom-in" title="放大，月份看更清楚">＋</button>
+    </div>
+  </div>
   <div class="gantt-container">
     <div class="gantt-labels" id="gantt-labels"></div>
     <div class="gantt-right">
@@ -828,6 +860,8 @@
     </div>
     <label>展館地址（填了才能點進 Google 地圖）</label>
     <input type="text" id="f-address" placeholder="例如：台北市中山區中山北路三段181號">
+    <label>手動座標（選填，自動定位查不到時可以用）</label>
+    <input type="text" id="f-latlng" placeholder="從 Google 地圖複製，例如：25.0725, 121.5199">
     <div class="row2">
       <div>
         <label>開始日期</label>
@@ -891,7 +925,9 @@ let EXHIBITIONS = [
 const REGION_LABEL = { north:"北", central:"中", south:"南", abroad:"海外" };
 const REGIONS = ["north","central","south","abroad"];
 const DAY_MS = 86400000;
-const PX_PER_DAY = 6;
+let PX_PER_DAY = 6;
+const PX_PER_DAY_MIN = 2;
+const PX_PER_DAY_MAX = 20;
 const ROW_GAP_DAYS = 4;
 
 function d(dateStr){ return new Date(dateStr + "T00:00:00"); }
@@ -1321,6 +1357,8 @@ function openForm(prefillItem){
   document.getElementById("f-region").value = editingItem ? editingItem.region : "north";
   document.getElementById("f-venue").value = editingItem ? editingItem.venue : "";
   document.getElementById("f-address").value = editingItem ? (editingItem.address || "") : "";
+  document.getElementById("f-latlng").value = (editingItem && editingItem.lat != null && editingItem.lng != null)
+    ? `${editingItem.lat}, ${editingItem.lng}` : "";
   document.getElementById("f-start").value = editingItem ? editingItem.start : "";
   document.getElementById("f-end").value = editingItem ? editingItem.end : "";
   document.getElementById("f-image").value = editingItem ? (editingItem.image || "") : "";
@@ -1350,6 +1388,17 @@ document.getElementById("f-save").addEventListener("click", ()=>{
   const region = document.getElementById("f-region").value;
   const venue = document.getElementById("f-venue").value.trim();
   const address = document.getElementById("f-address").value.trim();
+  const latlngRaw = document.getElementById("f-latlng").value.trim();
+  let manualCoords = null;
+  if(latlngRaw){
+    const parts = latlngRaw.split(",").map(s => parseFloat(s.trim()));
+    if(parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])){
+      manualCoords = { lat: parts[0], lng: parts[1] };
+    } else {
+      alert("手動座標格式看起來不對，請用「緯度, 經度」的格式（例如：25.0725, 121.5199），或留空讓系統自動查詢。");
+      return;
+    }
+  }
   const urlVal = document.getElementById("f-url").value.trim();
   const desc = document.getElementById("f-desc").value.trim();
   const urlImage = document.getElementById("f-image").value.trim();
@@ -1358,7 +1407,7 @@ document.getElementById("f-save").addEventListener("click", ()=>{
 
   async function addItem(imageValue){
     const payload = { title, region, category: currentCategory, venue, address, start, end, image: imageValue, url: urlVal, desc };
-    const coords = await geocodeItem(payload);
+    const coords = manualCoords || await geocodeItem(payload);
     if(coords){ payload.lat = coords.lat; payload.lng = coords.lng; }
     if(editingItem){
       Object.assign(editingItem, payload);
@@ -1375,7 +1424,7 @@ document.getElementById("f-save").addEventListener("click", ()=>{
       }
       buildTimeline();
     }
-    ["f-title","f-venue","f-address","f-image","f-url","f-desc"].forEach(id=>document.getElementById(id).value="");
+    ["f-title","f-venue","f-address","f-latlng","f-image","f-url","f-desc"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("f-start").value=""; document.getElementById("f-end").value="";
     fileInput.value = "";
     editingItem = null;
@@ -1597,10 +1646,12 @@ async function saveNote(content){
 /* ---------- geocoding (address -> lat/lng via Nominatim) ---------- */
 const REGION_BIAS = { north: "台灣 台北", central: "台灣 台中", south: "台灣 高雄", abroad: "" };
 
-async function geocodeQuery(query){
+async function geocodeQuery(query, opts={}){
   if(!query) return null;
   try{
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+    const params = new URLSearchParams({ format:"json", limit:"1", q: query });
+    if(opts.countryTW) params.set("countrycodes", "tw");
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
     const res = await fetch(url, { headers: { "Accept-Language": "zh-TW" } });
     if(!res.ok) return null;
     const data = await res.json();
@@ -1614,15 +1665,41 @@ async function geocodeQuery(query){
 }
 
 async function geocodeItem(item){
-  const bias = REGION_BIAS[item.region] || "";
-  const query = item.address && item.address.trim()
-    ? item.address.trim()
-    : [item.venue, bias].filter(Boolean).join(" ");
-  if(!query) return null;
-  return await geocodeQuery(query);
+  const isTW = item.region !== "abroad";
+  const candidates = [];
+  if(item.address && item.address.trim()) candidates.push(item.address.trim());
+  if(item.venue && item.venue.trim()) candidates.push(item.venue.trim());
+  for(let i=0; i<candidates.length; i++){
+    const result = await geocodeQuery(candidates[i], { countryTW: isTW });
+    if(result) return result;
+    if(i < candidates.length - 1) await new Promise(r => setTimeout(r, 1100));
+  }
+  return null;
 }
 
 /* ---------- view tabs ---------- */
+/* ---------- timeline zoom (+ / -) ---------- */
+(function initZoomControl(){
+  const zoomIn = document.getElementById("zoom-in");
+  const zoomOut = document.getElementById("zoom-out");
+  if(!zoomIn || !zoomOut) return;
+  function refreshButtons(){
+    zoomOut.disabled = PX_PER_DAY <= PX_PER_DAY_MIN;
+    zoomIn.disabled = PX_PER_DAY >= PX_PER_DAY_MAX;
+  }
+  zoomIn.addEventListener("click", ()=>{
+    PX_PER_DAY = Math.min(PX_PER_DAY + 2, PX_PER_DAY_MAX);
+    refreshButtons();
+    buildTimeline();
+  });
+  zoomOut.addEventListener("click", ()=>{
+    PX_PER_DAY = Math.max(PX_PER_DAY - 2, PX_PER_DAY_MIN);
+    refreshButtons();
+    buildTimeline();
+  });
+  refreshButtons();
+})();
+
 (function initViewTabs(){
   const tabs = document.querySelectorAll(".view-tab");
   const timelineView = document.getElementById("view-timeline");
@@ -1710,7 +1787,7 @@ async function renderMap(){
     if(occurrence > 0){
       // 座標幾乎重疊時，依黃金角度小幅錯開，避免完全蓋住
       const angle = occurrence * 137.5 * (Math.PI / 180);
-      const radius = 0.0025 * occurrence;
+      const radius = 0.02 * occurrence;
       lat += Math.cos(angle) * radius;
       lng += Math.sin(angle) * radius;
     }
@@ -1730,20 +1807,24 @@ async function renderMap(){
     bounds.push([lat, lng]);
   }
 
+  function updateNote(remaining){
+    let noteText = `地圖上顯示 ${bounds.length} 檔北中南展覽／市集的位置`;
+    if(abroadCount > 0) noteText += `，另有 ${abroadCount} 檔海外展覽不顯示在台灣地圖上`;
+    noteEl.textContent = noteText + "。";
+    unlocatedEl.innerHTML = remaining > 0
+      ? `<p class="map-unlocated-item">正在定位剩下 ${remaining} 筆展覽（地址服務有速率限制，一筆約需 1 秒，請留在這個分頁稍候）…</p>`
+      : (missing.length > 0 ? `<p class="map-unlocated-item">定位完成。</p>` : "");
+  }
+
   if(bounds.length > 0){
     map.fitBounds(bounds, { padding: [30,30], maxZoom: 12 });
   }
-
-  let noteText = `地圖上顯示 ${bounds.length} 檔北中南展覽／市集的位置`;
-  if(abroadCount > 0) noteText += `，另有 ${abroadCount} 檔海外展覽不顯示在台灣地圖上`;
-  noteEl.textContent = noteText + "。";
+  updateNote(missing.length);
 
   // opportunistically geocode items missing coordinates, then persist + add marker
-  unlocatedEl.innerHTML = missing.length
-    ? `<p class="map-unlocated-item">正在定位 ${missing.length} 筆還沒有座標的展覽…</p>`
-    : "";
-
-  for(const item of missing){
+  const failed = [];
+  for(let i=0; i<missing.length; i++){
+    const item = missing[i];
     const coords = await geocodeItem(item);
     if(coords){
       item.lat = coords.lat;
@@ -1751,10 +1832,19 @@ async function renderMap(){
       addMarker(item);
       if(bounds.length > 0) map.fitBounds(bounds, { padding: [30,30], maxZoom: 12 });
       updateExhibitionRemote(item);
+    } else {
+      failed.push(item);
     }
+    updateNote(missing.length - i - 1);
     await new Promise(r => setTimeout(r, 1100)); // respect Nominatim's 1 req/sec limit
   }
-  unlocatedEl.innerHTML = "";
+
+  if(failed.length > 0){
+    unlocatedEl.innerHTML = `<p class="map-unlocated-item">以下 ${failed.length} 筆查不到座標，請幫它們補上更完整的展館地址，或在編輯畫面填「手動座標」：</p>` +
+      failed.map(f => `<p class="map-unlocated-item">・${f.title}（${f.venue || "未填展館"}）</p>`).join("");
+  } else if(missing.length > 0){
+    unlocatedEl.innerHTML = `<p class="map-unlocated-item">定位完成。</p>`;
+  }
   mapHasRendered = true;
 }
 
