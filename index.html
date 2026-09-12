@@ -937,6 +937,9 @@ const DAY_MS = 86400000;
 let PX_PER_DAY = 6;
 const PX_PER_DAY_MIN = 2;
 const PX_PER_DAY_MAX = 20;
+let hasScrolledToToday = false;
+let pendingScrollAnchorDate = null;
+let pendingScrollAnchorOffset = 0;
 const ROW_GAP_DAYS = 4;
 
 function d(dateStr){ return new Date(dateStr + "T00:00:00"); }
@@ -1113,14 +1116,25 @@ function buildTimeline(){
     todayLine.style.height = totalHeight + "px";
     todayLine.innerHTML = `<span>今天</span>`;
     innerEl.appendChild(todayLine);
-
-    // scroll into view
-    requestAnimationFrame(()=>{
-      document.getElementById("gantt-scroll").scrollLeft = Math.max(tx - 160, 0);
-      if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
-      if(typeof updateBarLabelPositions === "function") updateBarLabelPositions();
-    });
   }
+
+  // decide scroll position after DOM settles: honour a pending zoom anchor first,
+  // otherwise auto-scroll to today only on the very first render
+  requestAnimationFrame(()=>{
+    const scrollEl = document.getElementById("gantt-scroll");
+    if(!scrollEl) return;
+    if(pendingScrollAnchorDate){
+      const targetX = xFor(pendingScrollAnchorDate);
+      scrollEl.scrollLeft = Math.max(targetX - pendingScrollAnchorOffset, 0);
+      pendingScrollAnchorDate = null;
+    } else if(!hasScrolledToToday && today >= rangeStart && today <= rangeEndRaw){
+      const tx = xFor(today);
+      scrollEl.scrollLeft = Math.max(tx - 160, 0);
+      hasScrolledToToday = true;
+    }
+    if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
+    if(typeof updateBarLabelPositions === "function") updateBarLabelPositions();
+  });
   if(window.__updateGanttScrollbar) window.__updateGanttScrollbar();
   if(typeof updateBarLabelPositions === "function") updateBarLabelPositions();
 }
@@ -1704,12 +1718,22 @@ async function geocodeItem(item){
     zoomOut.disabled = PX_PER_DAY <= PX_PER_DAY_MIN;
     zoomIn.disabled = PX_PER_DAY >= PX_PER_DAY_MAX;
   }
+  function captureAnchor(){
+    const scrollEl = document.getElementById("gantt-scroll");
+    if(scrollEl && chartRangeStart){
+      const anchorX = scrollEl.scrollLeft;
+      pendingScrollAnchorOffset = 0;
+      pendingScrollAnchorDate = new Date(chartRangeStart.getTime() + (anchorX / PX_PER_DAY) * DAY_MS);
+    }
+  }
   zoomIn.addEventListener("click", ()=>{
+    captureAnchor();
     PX_PER_DAY = Math.min(PX_PER_DAY + 2, PX_PER_DAY_MAX);
     refreshButtons();
     buildTimeline();
   });
   zoomOut.addEventListener("click", ()=>{
+    captureAnchor();
     PX_PER_DAY = Math.max(PX_PER_DAY - 2, PX_PER_DAY_MIN);
     refreshButtons();
     buildTimeline();
